@@ -119,3 +119,29 @@ void free_centroids(int k, float** centroids){
     }
     free(centroids);
 }
+
+int assimilate_to_centroid(char** point, float** centroids, int k, int dimensions) {
+    int closest_centroid = -1;
+    float min_distance = FLT_MAX;
+
+    for (int c = 0; c < k; c++) {
+        float current_distance = 0.0;
+
+        for (int d = 0; d < dimensions; d++) {
+            if (point[d] != NULL) {
+                float point_value = atof(point[d]);
+                float centroid_value = centroids[c][d];
+                
+                float diff = point_value - centroid_value;
+                current_distance += diff * diff;
+            }
+        }
+
+        if (current_distance < min_distance) {
+            min_distance = current_distance;
+            closest_centroid = c;
+        }
+    }
+
+    return closest_centroid;
+}
