@@ -1,10 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <float.h>
 
 #define MAX_LINE_SIZE 1024
 
-char*** read_csv(const char* FILENAME, int* out_row_count) {
+char*** read_csv(const char* FILENAME, int* out_row_count, int without_header) {
+
+    if(!(without_header == 0 || without_header == 1)){
+        fprintf(stderr, "Error: without_header must be 0 (false) or 1 (true).\n");
+        return NULL;        
+    }
+
     char*** dataset = NULL;
     int counter = 0;
 
@@ -17,10 +25,13 @@ char*** read_csv(const char* FILENAME, int* out_row_count) {
     char line[MAX_LINE_SIZE];
     
     //descomentar para tirar o cabecalho do arquivo
-    /*if (fgets(line, sizeof(line), file) == NULL) {
-        fclose(file);
-        return NULL; 
-    }*/
+    if(without_header == 1){
+        if (fgets(line, sizeof(line), file) == NULL) {
+            fclose(file);
+            return NULL; 
+        }
+    }
+    
 
     while (fgets(line, sizeof(line), file) != NULL) {
         int internal_counter = 0;
@@ -63,4 +74,48 @@ void free_dataset(char*** dataset, int row_count){
         free(dataset[i]);
     }
     free(dataset);
+}
+
+void generate_centroids(int k, char*** dataset, float** centroids, int dimensions, int row_count) {
+    
+    float* min_values = malloc(dimensions * sizeof(float));
+    float* max_values = malloc(dimensions * sizeof(float));
+
+    for (int j = 0; j < dimensions; j++) {
+        min_values[j] = FLT_MAX;
+        max_values[j] = -FLT_MAX;
+    }
+
+    for (int i = 0; i < row_count; i++) {
+        for (int j = 0; j < dimensions; j++) {
+            if (dataset[i][j] != NULL) {
+                float current_number = strtof(dataset[i][j], NULL);
+                
+                if (current_number < min_values[j]) min_values[j] = current_number;
+                if (current_number > max_values[j]) max_values[j] = current_number;
+            }
+        }
+    }
+
+    for (int i = 0; i < k; i++) {
+        centroids[i] = malloc(dimensions * sizeof(float)); 
+
+        for (int j = 0; j < dimensions; j++) {
+            float min = min_values[j];
+            float max = max_values[j];
+
+            float random_factor = (float)rand() / (float)RAND_MAX;
+            centroids[i][j] = min + random_factor * (max - min);
+        }
+    }
+
+    free(min_values);
+    free(max_values);
+}
+
+void free_centroids(int k, float** centroids){
+    for(int i = 0; i < k; i++) {
+        free(centroids[i]);
+    }
+    free(centroids);
 }
